@@ -2,6 +2,9 @@
 data/mongo/
 data/neo4j/
 
+# query results
+query*.json
+
 # Created by https://www.toptal.com/developers/gitignore/api/macos,linux,windows,git,visualstudiocode,visualstudio,node
 # Edit at https://www.toptal.com/developers/gitignore?templates=macos,linux,windows,git,visualstudiocode,visualstudio,node
 
