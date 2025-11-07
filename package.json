@@ -1,0 +1,16 @@
+{
+  "name": "aseguradoras-2025",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "start": "node src/app.js",
+    "import:mongo": "node src/mongo/import.js",
+    "import:neo4j": "node src/neo/import.js"
+  },
+  "dependencies": {
+    "csv-parser": "^3.0.0",
+    "express": "^5.1.0",
+    "mongodb": "^6.5.0",
+    "neo4j-driver": "^5.12.0"
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "name": "Aseguradoras 2025",
+  "image": "mcr.microsoft.com/devcontainers/javascript-node:20",
+  "postCreateCommand": "npm install",
+  "forwardPorts": [3000, 27017, 7474, 7687],
+  "features": {
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {}
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "mongodb.mongodb-vscode",
+        "ms-azuretools.vscode-docker",
+        "neo4j-cypher-language-support",
+        "formulahendry.code-runner"
+      ]
+    }
+  }
+}
