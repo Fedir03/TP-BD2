@@ -18,8 +18,7 @@ import {
     crearPoliza as neoCrearPoliza,
     neoFindAgente,
     neoFindCliente
-} from "./neo/queries.js";
-import { neoFindCliente } from "../neo/queries.js";
+} from "./../neo/queries.js";
 
 export const MISSING_ARGUMENTS = -1;
 export const ALREADY_EXISTS = -2;

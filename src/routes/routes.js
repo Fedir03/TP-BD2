@@ -5,7 +5,8 @@ import {
   polizasVencidas,
   topClientesCobertura,
   siniestrosTipoAccidente,
-  polizasSuspendidas
+  polizasSuspendidas,
+  verPolizasActivas
 } from "../mongo/queries.js";
 import {
   agentesConPolizas,

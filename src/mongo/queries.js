@@ -269,7 +269,7 @@ export async function crearVistaPolizasActivas() {
     await db.createCollection(viewName, {
       viewOn: sourceCollection,
       pipeline: [
-        { $match: { estado: "activa" } },
+        { $match: { estado: "Activa" } },
         { $sort: { fecha_inicio: 1 } }
       ]
     });
