@@ -20,10 +20,6 @@ const swaggerDocument = {
   ],
   tags: [
     {
-      name: "Health",
-      description: "Estado general del servicio"
-    },
-    {
       name: "MongoDB",
       description: "Consultas respaldadas por MongoDB"
     },
@@ -77,10 +73,6 @@ const swaggerDocument = {
         properties: {
           error: { type: "string", example: "MISSING_ARGUMENTS" }
         }
-      },
-      HealthResponse: {
-        type: "string",
-        example: "API Aseguradora funcionando"
       },
       PolizaResumen: {
         type: "object",
@@ -295,24 +287,6 @@ const swaggerDocument = {
     }
   },
   paths: {
-    "/": {
-      get: {
-        tags: ["Health"],
-        summary: "Validar estado del servicio",
-        description: "Devuelve un mensaje simple para confirmar que la API está activa.",
-        responses: {
-          200: {
-            description: "Mensaje de estado.",
-            content: {
-              "text/plain": {
-                schema: { $ref: "#/components/schemas/HealthResponse" }
-              }
-            }
-          },
-          500: { $ref: "#/components/responses/ServerError" }
-        }
-      }
-    },
     "/queries/query1": {
       get: {
         tags: ["MongoDB"],

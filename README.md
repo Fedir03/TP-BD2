@@ -52,28 +52,36 @@ La aplicación queda escuchando en `http://localhost:3000`. La ruta raíz (`/`) 
 
 ## Uso de Swagger UI
 - Abrí `http://localhost:3000/docs` para acceder a Swagger UI.
-- Cada endpoint aparece agrupado por recurso (`/mongo` y `/neo`). Podés:
-  1. Expandir un endpoint para ver su descripción y el schema de respuesta.
-  2. Presionar **Try it out**, modificar parámetros (si aplica) y ejecutar la petición.
-  3. Consultar el request/response real que genera la API.
-- Si necesitás consumir la especificación en otra herramienta, está disponible en `http://localhost:3000/openapi.json`.
+- Los endpoints están agrupados por tag (`MongoDB`, `Neo4j`, `Operaciones`). Cada uno documenta parámetros, schemas y ejemplos de respuesta.
+- Podés usar **Try it out** para enviar requests reales contra la API y ver el request/response generado.
+- La especificación OpenAPI también está disponible de forma cruda en `http://localhost:3000/openapi.json`.
 
 ## Endpoints principales
 
-### Consultas MongoDB (`/mongo`)
-- `GET /mongo/clientes-activos` – Clientes activos con pólizas vigentes.
-- `GET /mongo/clientes-sin-polizas` – Clientes sin pólizas activas.
-- `GET /mongo/polizas-vencidas` – Pólizas vencidas junto con el titular.
-- `GET /mongo/top-clientes-cobertura` – Top 10 por monto total de cobertura.
-- `GET /mongo/siniestros-tipo-accidente` – Siniestros tipo “Accidente” del último año.
-- `GET /mongo/polizas-suspendidas` – Pólizas suspendidas con el estado del cliente.
+### Consultas analíticas (`/queries/queryN`)
+Todas las consultas se sirven bajo `/queries` y se numeran igual que en la consigna del TP:
 
-### Consultas Neo4j (`/neo`)
-- `GET /neo/agentes-polizas` – Agentes activos y cantidad de pólizas emitidas.
-- `GET /neo/agentes-siniestros` – Agentes y siniestros asociados.
-- `GET /neo/clientes-multivehiculo` – Clientes con más de un vehículo asegurado.
-- `GET /neo/siniestros-abiertos` – Siniestros abiertos con cliente impactado.
-- `GET /neo/vehiculos-asegurados` – Vehículos con su titular y póliza.
+1. `GET /queries/query1` – Clientes activos con pólizas vigentes (MongoDB).
+2. `GET /queries/query2` – Siniestros abiertos con tipo, monto y cliente afectado (Neo4j).
+3. `GET /queries/query3` – Vehículos asegurados con su titular y póliza (Neo4j).
+4. `GET /queries/query4` – Clientes sin pólizas activas (MongoDB).
+5. `GET /queries/query5` – Agentes activos y cantidad de pólizas emitidas (Neo4j).
+6. `GET /queries/query6` – Pólizas vencidas junto con los datos del cliente (MongoDB).
+7. `GET /queries/query7` – Top 10 clientes por monto total de cobertura (MongoDB).
+8. `GET /queries/query8` – Siniestros tipo “Accidente” registrados en el último año (MongoDB).
+9. `GET /queries/query9` – Vista de pólizas activas ordenadas por fecha de inicio (MongoDB).
+10. `GET /queries/query10` – Pólizas suspendidas con el estado del cliente (MongoDB).
+11. `GET /queries/query11` – Clientes con más de un vehículo asegurado (Neo4j).
+12. `GET /queries/query12` – Agentes y cantidad de siniestros asociados (Neo4j).
+
+### Operaciones (ABM)
+- `POST /queries/crear-cliente` – Alta de cliente en MongoDB y Neo4j.
+- `PUT /queries/modificar-cliente/:id` – Modificación parcial de un cliente existente.
+- `DELETE /queries/borrar-cliente/:id` – Baja de cliente con cascada en ambas bases (pólizas y siniestros dependientes incluidos).
+- `POST /queries/crear-siniestro` – Alta de siniestro en ambas bases validando el `nro_poliza`.
+- `POST /queries/crear-poliza` – Alta de póliza verificando existencia de cliente y agente en ambos motores.
+  
+A nivel health check, `/` devuelve un simple “API Aseguradora funcionando”.
 
 ## Scripts npm
 | Script             | Descripción                                                |

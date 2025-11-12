@@ -13,7 +13,7 @@ app.get("/openapi.json", (_, res) => res.json(swaggerDocument));
 
 app.use("/queries", routes);
 
-app.get("/", (req, res) => res.send("API Aseguradora funcionando"));
+app.get("/", (_, res) => res.redirect("/docs/"));
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Servidor escuchando en puerto ${PORT}`));
