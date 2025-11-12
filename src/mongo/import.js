@@ -1,6 +1,7 @@
 import { client, db } from "./connect.js";
 import fs from "fs";
 import csv from "csv-parser";
+import { crearVistaPolizasActivas } from "./queries.js";
 
 async function importarColeccion(nombre, archivo) {
   const datos = [];
@@ -25,6 +26,9 @@ async function importarColeccion(nombre, archivo) {
     await importarColeccion("siniestros", "./data/siniestros.csv");
     await importarColeccion("vehiculos", "./data/vehiculos.csv");
     await importarColeccion("agentes", "./data/agentes.csv");
+
+    await crearVistaPolizasActivas();
+
   } finally {
     await client.close();
   }

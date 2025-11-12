@@ -1,4 +1,5 @@
 import { db } from "./connect.js";
+import { MISSING_ARGUMENTS, ALREADY_EXISTS, NOT_FOUND } from "../shared/shared.js";
 
 // 1. Clientes activos con pólizas vigentes
 export async function clientesActivos() {
@@ -24,7 +25,7 @@ export async function clientesActivos() {
       }
     },
     { $match: { "polizas_vigentes.0": { $exists: true } } },
-    { $project: { _id: 0, nombre: 1, polizas_vigentes: { nro_poliza: 1 } } }
+    { $project: { _id: 0, nombre: 1, apellido:1, polizas_vigentes: { nro_poliza: 1 } } }
   ]).toArray();
 }
 
@@ -58,10 +59,9 @@ export async function clientesSinPolizas() {
       }
     },
     { $match: { tiene_vigente: false } },
-    { $project: { _id: 0, nombre: 1 } }
+    { $project: { _id: 0, nombre: "$nombre", apellido: "$apellido"} }
   ]).toArray();
 }
-
 
 // 6. Pólizas vencidas con cliente
 export async function polizasVencidas() {
@@ -76,10 +76,16 @@ export async function polizasVencidas() {
       }
     },
     { $unwind: "$cliente" },
-    { $project: { _id: 0, nro_poliza: 1, "cliente.nombre": 1, "cliente.apellido": 1} }
+    {
+      $project: {
+        _id: 0,
+        nro_poliza: 1,
+        nombre: "$cliente.nombre",
+        apellido: "$cliente.apellido"
+      }
+    }
   ]).toArray();
 }
-
 
 // 7. Top 10 clientes por monto total de cobertura
 export async function topClientesCobertura() {
@@ -104,7 +110,8 @@ export async function topClientesCobertura() {
     {
       $project: {
         _id: 0,
-        cliente: "$cliente.nombre",
+        nombre: "$cliente.nombre",
+        apellido: "$cliente.apellido",
         total_cobertura: 1
       }
     }
@@ -135,7 +142,14 @@ export async function siniestrosTipoAccidente() {
   ).toArray();
 }
 
-// 9. Polizas suspendidas con estado del cliente
+// 9. Vista de polizas activas ordenadas por fecha de inicio
+export async function verPolizasActivas() {
+  const polizas = await db.collection("vista_polizas_activas").find().toArray();
+  return polizas;
+}
+
+
+// 10. Polizas suspendidas con estado del cliente
 export async function polizasSuspendidas() {
   return db.collection("polizas").aggregate([
     { $match: { estado: "Suspendida" } },
@@ -166,4 +180,102 @@ export async function polizasSuspendidas() {
     { $unwind: { path: "$cliente" } },
     { $project: { _id: 0, nro_poliza: 1, "cliente.estado": 1 } }
   ]).toArray();
+}
+
+// 13. ABM de clientes - Crear nuevo cliente
+export async function crearCliente(nuevoCliente) {
+  const exists = await db.collection("clientes").findOne({ id_cliente: nuevoCliente.id_cliente });
+  if (exists) return ALREADY_EXISTS;
+  const result = await db.collection("clientes").insertOne(nuevoCliente);
+  return result.insertedId;
+}
+
+// 13. ABM de clientes - Actualizar cliente existente
+export async function actualizarCliente(id_cliente, datosActualizados) {
+  const result = await db.collection("clientes").updateOne(
+    { id_cliente: id_cliente },
+    { $set: datosActualizados }
+  );
+  if (result.matchedCount === 0) {
+    return NOT_FOUND;
+  }
+  return result.modifiedCount;
+}
+
+// 13. ABM de clientes - Eliminar cliente
+export async function eliminarCliente(id_cliente) {
+  const result = await db.collection("clientes").deleteOne({ id_cliente: id_cliente });
+  if (result.deletedCount === 0) {
+    return NOT_FOUND;
+  }
+  return result.deletedCount;
+}
+
+// 14. Alta de nuevos siniestros
+export async function crearSiniestro(nuevoSiniestro) {
+  const poliza = await db.collection("polizas").findOne({ nro_poliza: nuevoSiniestro.nro_poliza });
+  if (!poliza) return NOT_FOUND;
+  const exists = await db.collection("siniestros").findOne({ id_siniestro: nuevoSiniestro.id_siniestro });
+  if (exists) return ALREADY_EXISTS;
+  const result = await db.collection("siniestros").insertOne(nuevoSiniestro);
+  return result.insertedId;
+}
+
+// 15. ABM de pólizas - Crear nueva póliza
+export async function crearPoliza(nuevaPoliza) {
+  const cliente = await db.collection("clientes").findOne({ id_cliente: nuevaPoliza.id_cliente });
+  if (!cliente) return NOT_FOUND;
+  const agente = await db.collection("agentes").findOne({ id_agente: nuevaPoliza.id_agente });
+  if (!agente) return NOT_FOUND;
+  const exists = await db.collection("polizas").findOne({ nro_poliza: nuevaPoliza.nro_poliza });
+  if (exists) return ALREADY_EXISTS;
+  const result = await db.collection("polizas").insertOne(nuevaPoliza);
+  return result.insertedId;
+}
+
+// funciones auxiliares para shared.js
+export async function mongoFindCliente(id_cliente) {
+    const cliente = await db.collection("clientes").findOne({ id_cliente: id_cliente });
+    return cliente;
+}
+
+export async function mongoFindAgente(id_agente) {
+    const agente = await db.collection("agentes").findOne({ id_agente: id_agente });
+    return agente;
+}
+
+export async function mongoEliminarSiniestro(id_siniestro) {
+    const result = await db.collection("siniestros").deleteOne({ id_siniestro: id_siniestro });
+    return result.deletedCount;
+}
+
+export async function mongoEliminarPoliza(nro_poliza) {
+    const result = await db.collection("polizas").deleteOne({ nro_poliza: nro_poliza });
+    return result.deletedCount;
+}
+
+// funcion auxiliar para la vista de la query 9
+export async function crearVistaPolizasActivas() {
+  const viewName = "vista_polizas_activas";
+  const sourceCollection = "polizas";
+
+  try {
+    const existing = await db.listCollections({ name: viewName }).toArray();
+    if (existing.length > 0) {
+      await db.collection(viewName).drop();
+      console.log(`Vista existente '${viewName}' eliminada.`);
+    }
+
+    await db.createCollection(viewName, {
+      viewOn: sourceCollection,
+      pipeline: [
+        { $match: { estado: "activa" } },
+        { $sort: { fecha_inicio: 1 } }
+      ]
+    });
+
+    console.log(`Vista '${viewName}' creada exitosamente.`);
+  } catch (error) {
+    console.error("Error al crear la vista de pólizas activas:", error);
+  }
 }
