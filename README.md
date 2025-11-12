@@ -18,7 +18,7 @@ API Node.js/Express que expone consultas analíticas sobre una aseguradora utili
 
 1. **Levantar las bases de datos**
    ```bash
-   docker compose up -d
+   docker-compose up -d
    ```
    Los volúmenes quedan montados sobre `./data/mongo` y `./data/neo4j`, por lo que los datos persisten entre reinicios.
 
