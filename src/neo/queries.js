@@ -97,7 +97,7 @@ export async function crearCliente(nuevoCliente) {
   const s = getSession("WRITE");
   try {
     const qCheck = `
-      MATCH (c:Cliente {id_cliente: $id_cliente})
+      MATCH (c:Cliente {id: $id_cliente})
       RETURN c
     `;
     const resCheck = await s.run(qCheck, { id_cliente: nuevoCliente.id_cliente });
@@ -107,7 +107,7 @@ export async function crearCliente(nuevoCliente) {
 
     const qCreate = `
       CREATE (c:Cliente {
-        id_cliente: $id_cliente,
+        id: $id_cliente,
         nombre: $nombre,
         apellido: $apellido,
         dni: $dni,
@@ -132,7 +132,7 @@ export async function crearCliente(nuevoCliente) {
       provincia: nuevoCliente.provincia,
       activo: nuevoCliente.activo
     });
-    return resCreate.records[0].get("c").properties.id_cliente;
+    return resCreate.records[0].get("c").properties.id;
   } finally { await s.close(); }
 }
 
@@ -141,7 +141,7 @@ export async function actualizarCliente(id_cliente, datosActualizados) {
   const s = getSession("WRITE");
   try {
     const qUpdate = `
-      MATCH (c:Cliente {id_cliente: $id_cliente})
+      MATCH (c:Cliente {id: $id_cliente})
       SET c += $datosActualizados
       RETURN c
     `;
@@ -149,7 +149,7 @@ export async function actualizarCliente(id_cliente, datosActualizados) {
     if (resUpdate.records.length === 0) {
       return NOT_FOUND;
     }
-    return resUpdate.records[0].get("c").properties.id_cliente;
+    return resUpdate.records[0].get("c").properties.id;
   } finally { await s.close(); }
 }
 
@@ -158,17 +158,27 @@ export async function eliminarCliente(id_cliente) {
   const s = getSession("WRITE");
   try {
     const qDelete = `
-      MATCH (c:Cliente {id_cliente: $id_cliente})
-      WITH c, COUNT(c) AS count
+      MATCH (c:Cliente {id: $id_cliente})
+      OPTIONAL MATCH (c)-[:TIENE]->(p:Poliza)
+      OPTIONAL MATCH (p)<-[:CUBIERTO_POR]-(s:Siniestro)
+      WITH c, collect(DISTINCT p) AS polizas, collect(DISTINCT s) AS siniestros
+      WITH c, polizas, siniestros, size(polizas) AS polizasCount, size(siniestros) AS siniestrosCount
+      FOREACH (sin IN siniestros | DETACH DELETE sin)
+      FOREACH (pol IN polizas | DETACH DELETE pol)
       DETACH DELETE c
-      RETURN count AS deletedCount
+      RETURN 1 AS deletedCliente, polizasCount AS deletedPolizas, siniestrosCount AS deletedSiniestros
     `;
     const resDelete = await s.run(qDelete, { id_cliente });
-    const deletedCount = resDelete.records[0].get("deletedCount").toNumber();
-    if (deletedCount === 0) {
+    if (resDelete.records.length === 0) {
       return NOT_FOUND;
     }
-    return deletedCount;
+    const record = resDelete.records[0];
+    const deletedCliente = record.get("deletedCliente");
+    return {
+      deletedCliente: typeof deletedCliente.toNumber === "function" ? deletedCliente.toNumber() : deletedCliente,
+      deletedPolizas: record.get("deletedPolizas").toNumber(),
+      deletedSiniestros: record.get("deletedSiniestros").toNumber()
+    };
   } finally { await s.close(); }
 }
 
@@ -178,7 +188,7 @@ export async function crearSiniestro(nuevoSiniestro) {
   try {
     // Check if siniestro already exists
     const qCheck = `
-      MATCH (s:Siniestro {id_siniestro: $id_siniestro})
+      MATCH (s:Siniestro {id: $id_siniestro})
       RETURN s
     `;
     const resCheck = await s.run(qCheck, { id_siniestro: nuevoSiniestro.id_siniestro });
@@ -188,7 +198,7 @@ export async function crearSiniestro(nuevoSiniestro) {
 
     // Check if the associated poliza exists
     const qPoliza = `
-      MATCH (p:Poliza {nro_poliza: $nro_poliza})
+      MATCH (p:Poliza {id: $nro_poliza})
       RETURN p
     `;
     const resPoliza = await s.run(qPoliza, { nro_poliza: nuevoSiniestro.nro_poliza });
@@ -198,12 +208,12 @@ export async function crearSiniestro(nuevoSiniestro) {
 
     // Create the new siniestro
     const qCreate = `
-      MATCH (p:Poliza {nro_poliza: $nro_poliza})
+      MATCH (p:Poliza {id: $nro_poliza})
       CREATE (s:Siniestro {
-        id_siniestro: $id_siniestro,
+        id: $id_siniestro,
         fecha: $fecha,
         tipo: $tipo,
-        monto_estimado: $monto_estimado,
+        monto: $monto_estimado,
         descripcion: $descripcion,
         estado: $estado
       })
@@ -219,7 +229,7 @@ export async function crearSiniestro(nuevoSiniestro) {
       descripcion: nuevoSiniestro.descripcion,
       estado: nuevoSiniestro.estado
     });
-    return resCreate.records[0].get("s").properties.id_siniestro;
+    return resCreate.records[0].get("s").properties.id;
   } finally { await s.close(); }
 }
 
@@ -229,7 +239,7 @@ export async function crearPoliza(nuevaPoliza) {
   try {
     // Check if poliza already exists
     const qCheck = `
-      MATCH (p:Poliza {nro_poliza: $nro_poliza})
+      MATCH (p:Poliza {id: $nro_poliza})
       RETURN p
     `;
     const resCheck = await s.run(qCheck, { nro_poliza: nuevaPoliza.nro_poliza });
@@ -239,7 +249,7 @@ export async function crearPoliza(nuevaPoliza) {
 
     // Check if the associated cliente exists
     const qCliente = `
-      MATCH (c:Cliente {id_cliente: $id_cliente})
+      MATCH (c:Cliente {id: $id_cliente})
       RETURN c
     `;
     const resCliente = await s.run(qCliente, { id_cliente: nuevaPoliza.id_cliente });
@@ -249,7 +259,7 @@ export async function crearPoliza(nuevaPoliza) {
 
     // Check if the associated agente exists
     const qAgente = `
-      MATCH (a:Agente {id_agente: $id_agente})
+      MATCH (a:Agente {id: $id_agente})
       RETURN a
     `;
     const resAgente = await s.run(qAgente, { id_agente: nuevaPoliza.id_agente });
@@ -259,9 +269,10 @@ export async function crearPoliza(nuevaPoliza) {
 
     // Create the new poliza
     const qCreate = `
-      MATCH (c:Cliente {id_cliente: $id_cliente}), (a:Agente {id_agente: $id_agente})
+      MATCH (c:Cliente {id: $id_cliente})
+      MATCH (a:Agente {id: $id_agente})
       CREATE (p:Poliza {
-        nro_poliza: $nro_poliza,
+        id: $nro_poliza,
         tipo: $tipo,
         fecha_inicio: $fecha_inicio,
         fecha_fin: $fecha_fin,
@@ -284,7 +295,8 @@ export async function crearPoliza(nuevaPoliza) {
       cobertura_total: nuevaPoliza.cobertura_total,
       estado: nuevaPoliza.estado
     });
-    return resCreate.records[0].get("p").properties.nro_poliza;
+    const created = resCreate.records[0].get("p").properties;
+    return created.nro_poliza ?? created.id;
   } finally { await s.close(); }
 }
 
@@ -293,7 +305,7 @@ export async function neoFindCliente(id_cliente) {
     const s = getSession("READ");
     try {
         const q = `
-            MATCH (c:Cliente {id_cliente: $id_cliente})
+            MATCH (c:Cliente {id: $id_cliente})
             RETURN c
         `;
         const res = await s.run(q, { id_cliente });
@@ -308,7 +320,7 @@ export async function neoFindAgente(id_agente) {
     const s = getSession("READ");
     try {
         const q = `
-            MATCH (a:Agente {id_agente: $id_agente})
+            MATCH (a:Agente {id: $id_agente})
             RETURN a
         `;
         const res = await s.run(q, { id_agente });
@@ -318,4 +330,3 @@ export async function neoFindAgente(id_agente) {
         return res.records[0].get("a").properties;
     } finally { await s.close(); }
 }
-

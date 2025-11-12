@@ -23,7 +23,10 @@ import {
   crearPoliza,
   MISSING_ARGUMENTS,
   ALREADY_EXISTS,
-  NOT_FOUND
+  NOT_FOUND,
+  POLIZA_NOT_FOUND,
+  CLIENTE_NOT_FOUND,
+  AGENTE_NOT_FOUND
 } from "../shared/shared.js";
 
 const router = express.Router();
@@ -96,7 +99,7 @@ router.post("/crear-siniestro", async (req, res) => {
   try {
     const result = await crearSiniestro(req.body);
     if (result === ALREADY_EXISTS) return res.status(409).json({ error: "ALREADY_EXISTS" });
-    if (result === NOT_FOUND) return res.status(404).json({ error: "NOT_FOUND" });
+    if (result === POLIZA_NOT_FOUND) return res.status(404).json({ error: "POLIZA_NOT_FOUND" });
     return res.status(201).json(result);
   } catch (e) {
     if (e.message === "MISSING_ARGUMENTS") return res.status(400).json({ error: "MISSING_ARGUMENTS" });
@@ -109,7 +112,8 @@ router.post("/crear-poliza", async (req, res) => {
   try {
     const result = await crearPoliza(req.body);
     if (result === ALREADY_EXISTS) return res.status(409).json({ error: "ALREADY_EXISTS" });
-    if (result === NOT_FOUND) return res.status(404).json({ error: "NOT_FOUND" });
+    if (result === CLIENTE_NOT_FOUND) return res.status(404).json({ error: "CLIENTE_NOT_FOUND" });
+    if (result === AGENTE_NOT_FOUND) return res.status(404).json({ error: "AGENTE_NOT_FOUND" });
     return res.status(201).json(result);
   } catch (e) {
     if (e.message === "MISSING_ARGUMENTS") return res.status(400).json({ error: "MISSING_ARGUMENTS" });

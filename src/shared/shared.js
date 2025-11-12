@@ -23,6 +23,9 @@ import {
 export const MISSING_ARGUMENTS = -1;
 export const ALREADY_EXISTS = -2;
 export const NOT_FOUND = -3;
+export const POLIZA_NOT_FOUND = "POLIZA_NOT_FOUND";
+export const CLIENTE_NOT_FOUND = "CLIENTE_NOT_FOUND";
+export const AGENTE_NOT_FOUND = "AGENTE_NOT_FOUND";
 
 export async function crearCliente(nuevoCliente) {
     if (!nuevoCliente || !nuevoCliente.id_cliente || !nuevoCliente.nombre || !nuevoCliente.apellido 
@@ -94,14 +97,21 @@ export async function crearSiniestro(nuevoSiniestro) {
         // primero en mongo
         const mongoRes = await mongoCrearSiniestro(nuevoSiniestro);
         if (mongoRes === ALREADY_EXISTS) {
-            return mongoRes; // falla
+            return ALREADY_EXISTS;
+        }
+        if (mongoRes === NOT_FOUND) {
+            return POLIZA_NOT_FOUND;
         }
 
         // funciono mongo, pruebo neo
         const neoRes = await neoCrearSiniestro(nuevoSiniestro);
-        if ( neoRes === ALREADY_EXISTS) {
+        if (neoRes === ALREADY_EXISTS) {
             await mongoEliminarSiniestro(nuevoSiniestro.id_siniestro); // rollback manual en mongo
-            return NOT_FOUND;
+            return ALREADY_EXISTS;
+        }
+        if (neoRes === NOT_FOUND) {
+            await mongoEliminarSiniestro(nuevoSiniestro.id_siniestro);
+            return POLIZA_NOT_FOUND;
         }
 
         return { success: true, neo: neoRes, mongo: mongoRes };
@@ -120,11 +130,17 @@ export async function crearPoliza(nuevaPoliza) {
     }
 
     try {
-        if (!await mongoFindCliente(nuevaPoliza.id_cliente) 
-            || !await mongoFindAgente(nuevaPoliza.id_agente) 
-        || !await neoFindCliente(nuevaPoliza.id_cliente) 
-        || !await neoFindAgente(nuevaPoliza.id_agente)) {
-            return NOT_FOUND;
+        if (!await mongoFindCliente(nuevaPoliza.id_cliente)) {
+            return CLIENTE_NOT_FOUND;
+        }
+        if (!await mongoFindAgente(nuevaPoliza.id_agente)) {
+            return AGENTE_NOT_FOUND;
+        }
+        if (!await neoFindCliente(nuevaPoliza.id_cliente)) {
+            return CLIENTE_NOT_FOUND;
+        }
+        if (!await neoFindAgente(nuevaPoliza.id_agente)) {
+            return AGENTE_NOT_FOUND;
         }
         
         // primero pruebo en mongo

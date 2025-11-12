@@ -204,11 +204,33 @@ export async function actualizarCliente(id_cliente, datosActualizados) {
 
 // 13. ABM de clientes - Eliminar cliente
 export async function eliminarCliente(id_cliente) {
-  const result = await db.collection("clientes").deleteOne({ id_cliente: id_cliente });
-  if (result.deletedCount === 0) {
+  const cliente = await db.collection("clientes").findOne({ id_cliente });
+  if (!cliente) {
     return NOT_FOUND;
   }
-  return result.deletedCount;
+
+  const polizasCliente = await db
+    .collection("polizas")
+    .find({ id_cliente }, { projection: { nro_poliza: 1 } })
+    .toArray();
+  const polizaIds = polizasCliente.map(p => p.nro_poliza);
+
+  let deletedSiniestros = 0;
+  if (polizaIds.length > 0) {
+    const siniestrosResult = await db
+      .collection("siniestros")
+      .deleteMany({ nro_poliza: { $in: polizaIds } });
+    deletedSiniestros = siniestrosResult.deletedCount;
+  }
+
+  const polizasResult = await db.collection("polizas").deleteMany({ id_cliente });
+  const clienteResult = await db.collection("clientes").deleteOne({ id_cliente });
+
+  return {
+    deletedCliente: clienteResult.deletedCount,
+    deletedPolizas: polizasResult.deletedCount,
+    deletedSiniestros
+  };
 }
 
 // 14. Alta de nuevos siniestros
