@@ -27,14 +27,14 @@ export async function vehiculosAsegurados() {
     const q = `
       MATCH (v:Vehiculo)<-[:POSEE]-(c:Cliente)-[:TIENE]->(p:Poliza)
       WHERE v.asegurado = "True"
-      RETURN c.nombre AS nombre, c.apellido AS apellido, v.patente AS patente, p.id AS nro_poliza
+      RETURN c.nombre AS nombre, c.apellido AS apellido, v.patente AS patente, p.id AS nro_poliza ORDER BY v.patente
     `;
     const res = await s.run(q);
     return res.records.map(r => ({
+      nro_poliza: r.get("nro_poliza"),
       nombre: r.get("nombre"),
       apellido: r.get("apellido"),
       patente: r.get("patente"),
-      nro_poliza: r.get("nro_poliza"),
     }));
   } finally { await s.close(); }
 }
