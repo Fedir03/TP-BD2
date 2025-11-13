@@ -178,7 +178,7 @@ export async function polizasSuspendidas() {
       }
     },
     { $unwind: { path: "$cliente" } },
-    { $project: { _id: 0, nro_poliza: 1, "cliente.estado": 1 } }
+    { $project: { _id: 0, nro_poliza: 1, "estado_cliente": "$cliente.estado" } }
   ]).toArray();
 }
 
