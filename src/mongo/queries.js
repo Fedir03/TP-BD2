@@ -96,8 +96,6 @@ export async function topClientesCobertura() {
         total_cobertura: { $sum: { $toInt: "$cobertura_total" } }
       }
     },
-    { $sort: { total_cobertura: -1 } },
-    { $limit: 10 },
     {
       $lookup: {
         from: "clientes",
@@ -107,6 +105,8 @@ export async function topClientesCobertura() {
       }
     },
     { $unwind: "$cliente" },
+    { $sort: { total_cobertura: -1, "cliente.apellido": 1 } },
+    { $limit: 10 },
     {
       $project: {
         _id: 0,

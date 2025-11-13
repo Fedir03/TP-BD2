@@ -52,7 +52,7 @@ export async function agentesConPolizas() {
     return res.records.map(r => ({
       nombre: r.get("nombre"),
       apellido: r.get("apellido"),
-      polizas: r.get("polizas").toNumber()
+      cant_polizas: r.get("polizas").toNumber()
     }));
   } finally { await s.close(); }
 }
