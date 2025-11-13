@@ -41,7 +41,7 @@ async function run() {
     await session.run(`
       LOAD CSV WITH HEADERS FROM 'file:///vehiculos.csv' AS row
       MATCH (c:Cliente {id: row.id_cliente})
-      CREATE (v:Vehiculo {id: row.id_vehiculo, patente: row.patente})
+      CREATE (v:Vehiculo {id: row.id_vehiculo, patente: row.patente, asegurado: row.asegurado})
       CREATE (c)-[:POSEE]->(v);
     `);
     

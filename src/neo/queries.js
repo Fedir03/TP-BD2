@@ -26,6 +26,7 @@ export async function vehiculosAsegurados() {
   try {
     const q = `
       MATCH (v:Vehiculo)<-[:POSEE]-(c:Cliente)-[:TIENE]->(p:Poliza)
+      WHERE v.asegurado = "True"
       RETURN c.nombre AS nombre, c.apellido AS apellido, v.patente AS patente, p.id AS nro_poliza
     `;
     const res = await s.run(q);
