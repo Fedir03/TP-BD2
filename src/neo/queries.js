@@ -71,7 +71,7 @@ export async function clientesMultivehiculo() {
     return res.records.map(r => ({
       nombre: r.get("nombre"),
       apellido: r.get("apellido"),
-      vehiculos: r.get("cant_vehiculos").toNumber()
+      cant_vehiculos: r.get("cant_vehiculos").toNumber()
     }));
   } finally { await s.close(); }
 }
@@ -88,7 +88,7 @@ export async function agentesConSiniestros() {
     return res.records.map(r => ({
       nombre: r.get("nombre"),
       apellido: r.get("apellido"),
-      siniestros: r.get("siniestros").toNumber()
+      cant_siniestros: r.get("siniestros").toNumber()
     }));
   } finally { await s.close(); }
 }
