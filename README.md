@@ -1,6 +1,6 @@
 # TP-BD2 · API de Aseguradora
 
-API Node.js/Express que expone consultas analíticas sobre una aseguradora utilizando dos motores: MongoDB (consultas documentales) y Neo4j (consultas gráficas). La especificación OpenAPI se publica junto con Swagger UI para poder explorar y probar los endpoints sin necesidad de herramientas externas.
+En este repositorio se encuentra una API Node.js/Express que expone consultas analíticas sobre una aseguradora utilizando dos motores: MongoDB (consultas documentales) y Neo4j (consultas gráficas). La especificación OpenAPI se publica junto con Swagger UI para poder explorar y probar los endpoints sin necesidad de herramientas externas.
 
 ## Arquitectura y stack
 - **Node.js 20+ / Express 5** para la capa HTTP.
